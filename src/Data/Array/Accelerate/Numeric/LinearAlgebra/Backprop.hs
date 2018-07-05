@@ -26,19 +26,9 @@ type Vector n = A.Acc (L.Vector n)
 
 type Matrix n = A.Acc (L.Matrix n)
 
-instance (A.Elt n, Num n, Num (A.Exp n)) => Backprop (Scalar n) where
-  zero s = A.fill (A.shape s) (A.constant 0)
-  one s = A.fill (A.shape s) (A.constant 1)
-  add l r = A.unit $ (A.the l) + (A.the r)
-
-instance (A.Elt n, Num n, Num (A.Exp n)) => Backprop (Vector n) where
-  zero s = A.fill (A.shape s) (A.constant 0)
-  one s = A.fill (A.shape s) (A.constant 1)
-  add l r = A.zipWith (+) l r
-
-instance (A.Elt n, Num n, Num (A.Exp n)) => Backprop (Matrix n) where
-  zero s = A.fill (A.shape s) (A.constant 0)
-  one s = A.fill (A.shape s) (A.constant 1)
+instance (A.Shape sh, A.Elt n, Num n, Num (A.Exp n)) => Backprop (A.Acc (A.Array sh n)) where
+  zero = A.map (\_ -> 0)
+  one = A.map (\_ -> 1)
   add l r = A.zipWith (+) l r
 
 (<.>) ::
