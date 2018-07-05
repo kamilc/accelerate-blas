@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# OPTIONS_GHC -fno-warn-orphans                     #-}
 
 -- |
@@ -29,8 +30,9 @@ type Matrix n = A.Acc (L.Matrix n)
 instance (A.Shape sh, A.Elt n, Num n, Num (A.Exp n)) => Backprop (A.Acc (A.Array sh n)) where
   zero = A.map (\_ -> 0)
   one = A.map (\_ -> 1)
-  add l r = A.zipWith (+) l r
+  add = A.zipWith (+)
 
+-- | Vector - vector product
 (<.>) ::
   (Reifies s W, Num (A.Exp n), L1.Numeric e, Num e)
   => BVar s (Vector e)
@@ -42,3 +44,18 @@ instance (A.Shape sh, A.Elt n, Num n, Num (A.Exp n)) => Backprop (A.Acc (A.Array
     , \dzdy ->
         let d = A.the dzdy
          in (A.map (\a -> a * d) y, A.map (\a -> a * d) x))
+infixr 8 <.>
+{-# INLINE (<.>) #-}
+
+-- | Outer vector - vector product
+(><) ::
+  (Reifies s W, Num (A.Exp n), L1.Numeric e, Num e)
+  => BVar s (Vector e)
+  -> BVar s (Vector e)
+  -> BVar s (Matrix e)
+(><) =
+  liftOp2 . op2 $ \x y ->
+    ( (L.><) x y
+    , undefined )
+infixr 8 ><
+{-# INLINE (><) #-}
