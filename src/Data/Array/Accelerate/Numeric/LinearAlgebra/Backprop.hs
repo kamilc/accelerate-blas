@@ -21,6 +21,7 @@ import qualified Data.Array.Accelerate as A
 import qualified Data.Array.Accelerate.Numeric.LinearAlgebra as L
 import qualified Data.Array.Accelerate.Numeric.LinearAlgebra.BLAS.Level1 as L1
 import qualified Data.Array.Accelerate.Numeric.LinearAlgebra.BLAS.Level2 as L2
+import qualified Data.Array.Accelerate.Numeric.LinearAlgebra.BLAS.Level3 as L3
 import Numeric.Backprop
 
 type Scalar n = A.Acc (L.Scalar n)
@@ -90,4 +91,28 @@ infixr 8 ><
           (dzdy L.>< y, L2.gemv (A.constant 1) L2.T x dzdy)
       )
 
+(<#) ::
+  forall s e. (Reifies s W, L1.Numeric e, Num e)
+    => BVar s (Vector e)
+    -> BVar s (Matrix e)
+    -> BVar s (Vector e)
+(<#) =
+    liftOp2 . op2 $ \x y ->
+      ( x L.<# y
+      , \dzdy ->
+          (L2.gemv (A.constant 1) L2.T y dzdy, dzdy L.>< x)
+      )
+
+(<>) ::
+  forall s e. (Reifies s W, L1.Numeric e, Num e)
+    => BVar s (Matrix e)
+    -> BVar s (Matrix e)
+    -> BVar s (Matrix e)
+(<>) =
+    liftOp2 . op2 $ \x y ->
+      ( x L.<> y
+      , \dzdy ->
+          ( L3.gemm (A.constant 1) L2.N dzdy L2.T y
+          , L3.gemm (A.constant 1) L2.T x L2.N dzdy)
+      )
 
