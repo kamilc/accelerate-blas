@@ -77,3 +77,17 @@ outer =
 (><) = outer
 infixr 8 ><
 {-# INLINE (><) #-}
+
+(#>) ::
+  forall s e. (Reifies s W, L1.Numeric e, Num e)
+    => BVar s (Matrix e)
+    -> BVar s (Vector e)
+    -> BVar s (Vector e)
+(#>) =
+    liftOp2 . op2 $ \x y ->
+      ( x L.#> y
+      , \dzdy ->
+          (dzdy L.>< y, L2.gemv (A.constant 1) L2.T x dzdy)
+      )
+
+
